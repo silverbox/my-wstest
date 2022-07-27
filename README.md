@@ -40,3 +40,9 @@ wscat -c wss://y5ucuka917.execute-api.ap-northeast-1.amazonaws.com/dev
 ```json
 {"action":"sendmessage", "roomid":"testroom", "data":"hello world"}
 ```
+
+## leave
+
+```json
+{"action":"leave", "roomid":"testroom"}
+```
