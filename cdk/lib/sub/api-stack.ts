@@ -1,9 +1,8 @@
-import { NestedStack, Duration, Fn } from 'aws-cdk-lib';
+import { NestedStack, Duration, aws_lambda_nodejs as lambdajs } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
-import { aws_lambda_nodejs as lambdajs } from "aws-cdk-lib"
 
 export class ApiStack extends NestedStack {
   public readonly apiGateway: apigatewayv2.CfnApi;
@@ -37,7 +36,7 @@ export class ApiStack extends NestedStack {
       memorySize: 1024
     };
 
-    // connect
+    // lambda function
     const lambdaConnect = new lambdajs.NodejsFunction(this, 'WebSocketLambdaFunctionConnect', {
       functionName: 'websocket-lambdaconnect',
       entry: 'src/lambda/connect.ts',
@@ -48,9 +47,19 @@ export class ApiStack extends NestedStack {
       entry: 'src/lambda/disconnect.ts',
       ...commonLambdaParam
     });
+    const lambdaJoin = new lambdajs.NodejsFunction(this, 'WebSocketLambdaFunctionJoin', {
+      functionName: 'websocket-lambdajoin',
+      entry: 'src/lambda/join.ts',
+      ...commonLambdaParam
+    });
     const lambdaSendMessage = new lambdajs.NodejsFunction(this, 'WebSocketLambdaFunctionSendMessage', {
       functionName: 'websocket-lambdasendmessage',
       entry: 'src/lambda/sendmessage.ts',
+      ...commonLambdaParam
+    });
+    const lambdaLeave = new lambdajs.NodejsFunction(this, 'WebSocketLambdaFunctionLeave', {
+      functionName: 'websocket-lambdaleave',
+      entry: 'src/lambda/leave.ts',
       ...commonLambdaParam
     });
     const lambdaDefault = new lambdajs.NodejsFunction(this, 'WebSocketLambdaFunctionDefault', {
@@ -65,7 +74,9 @@ export class ApiStack extends NestedStack {
       resources: [
         lambdaConnect.functionArn,
         lambdaDisconnect.functionArn,
+        lambdaJoin.functionArn,
         lambdaSendMessage.functionArn,
+        lambdaLeave.functionArn,
         lambdaDefault.functionArn
       ],
       actions: [
@@ -91,9 +102,9 @@ export class ApiStack extends NestedStack {
       integrationUri: `arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${lambdaConnect.functionArn}/invocations`,
       credentialsArn: apigwRole.roleArn,
     });
-    const routeConnect = new apigatewayv2.CfnRoute(scope, `WebSocketApiGatewayRouteConnect`, {
+    const routeConnect = new apigatewayv2.CfnRoute(scope, 'WebSocketApiGatewayRouteConnect', {
       apiId: webSocketApi.ref,
-      routeKey: "$connect",
+      routeKey: '$connect',
       authorizationType: 'NONE',
       target: 'integrations/' + integrationConnect.ref,
     });
@@ -104,11 +115,24 @@ export class ApiStack extends NestedStack {
       integrationUri: `arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${lambdaDisconnect.functionArn}/invocations`,
       credentialsArn: apigwRole.roleArn,
     });
-    const routeDisconnect = new apigatewayv2.CfnRoute(scope, `WebSocketApiGatewayRouteDisonnect`, {
+    const routeDisconnect = new apigatewayv2.CfnRoute(scope, 'WebSocketApiGatewayRouteDisonnect', {
       apiId: webSocketApi.ref,
-      routeKey: "$disconnect",
+      routeKey: '$disconnect',
       authorizationType: 'NONE',
       target: 'integrations/' + integrationDisconnect.ref,
+    });
+
+    const integrationJoin = new apigatewayv2.CfnIntegration(scope, 'WebSocketApiGatewayLambdaIntegrationJoin', {
+      apiId: webSocketApi.ref,
+      integrationType: 'AWS_PROXY',
+      integrationUri: `arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${lambdaJoin.functionArn}/invocations`,
+      credentialsArn: apigwRole.roleArn,
+    });
+    const routeJoin = new apigatewayv2.CfnRoute(scope, 'WebSocketApiGatewayRouteJoin', {
+      apiId: webSocketApi.ref,
+      routeKey: 'join',
+      authorizationType: 'NONE',
+      target: 'integrations/' + integrationJoin.ref,
     });
 
     const integrationSendMessage = new apigatewayv2.CfnIntegration(scope, 'WebSocketApiGatewayLambdaIntegrationSendMessage', {
@@ -117,11 +141,24 @@ export class ApiStack extends NestedStack {
       integrationUri: `arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${lambdaSendMessage.functionArn}/invocations`,
       credentialsArn: apigwRole.roleArn,
     });
-    const routeSendMessage = new apigatewayv2.CfnRoute(scope, `WebSocketApiGatewayRouteSendMessage`, {
+    const routeSendMessage = new apigatewayv2.CfnRoute(scope, 'WebSocketApiGatewayRouteSendMessage', {
       apiId: webSocketApi.ref,
-      routeKey: "sendmessage",
+      routeKey: 'sendmessage',
       authorizationType: 'NONE',
       target: 'integrations/' + integrationSendMessage.ref,
+    });
+
+    const integrationLeave = new apigatewayv2.CfnIntegration(scope, 'WebSocketApiGatewayLambdaIntegrationLeave', {
+      apiId: webSocketApi.ref,
+      integrationType: 'AWS_PROXY',
+      integrationUri: `arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${lambdaLeave.functionArn}/invocations`,
+      credentialsArn: apigwRole.roleArn,
+    });
+    const routeLeave = new apigatewayv2.CfnRoute(scope, 'WebSocketApiGatewayRouteLeave', {
+      apiId: webSocketApi.ref,
+      routeKey: 'leave',
+      authorizationType: 'NONE',
+      target: 'integrations/' + integrationLeave.ref,
     });
 
     const integrationDefault = new apigatewayv2.CfnIntegration(scope, 'WebSocketApiGatewayLambdaIntegrationDefault', {
@@ -130,13 +167,14 @@ export class ApiStack extends NestedStack {
       integrationUri: `arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${lambdaDefault.functionArn}/invocations`,
       credentialsArn: apigwRole.roleArn,
     });
-    const routeDefault = new apigatewayv2.CfnRoute(scope, `WebSocketApiGatewayRouteDefault`, {
+    const routeDefault = new apigatewayv2.CfnRoute(scope, 'WebSocketApiGatewayRouteDefault', {
       apiId: webSocketApi.ref,
-      routeKey: "$default",
+      routeKey: '$default',
       authorizationType: 'NONE',
       target: 'integrations/' + integrationDefault.ref,
     });
 
+    // TODO At first, you need to commentout the following two resources. and then, uncomment it and deploy again.
     const webSocketApiId =  webSocketApi.ref; // Fn.ref(webSocketApi.logicalId);
     const webSocketStageName = 'dev';
     const webSocketApiDeployment = new apigatewayv2.CfnDeployment(this, 'WebSocketApiGatewayDeployment', {
@@ -144,6 +182,7 @@ export class ApiStack extends NestedStack {
       // stageName: webSocketStageName,
       description: 'initial deployment',
     });
+    
     const webSocketApiStage = new apigatewayv2.CfnStage(this, 'WebSocketApiGatewayStage', {
       apiId: webSocketApiId,
       stageName: webSocketStageName,
