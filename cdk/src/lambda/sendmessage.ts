@@ -1,9 +1,9 @@
-import * as AWS from "aws-sdk";
+import * as AWS from 'aws-sdk';
 
 exports.handler = async (event: any) => {
   const ddb = new AWS.DynamoDB.DocumentClient({ apiVersion: '2012-08-10', region: process.env.AWS_REGION });
-  const socketKey = 'testkey'; // event['queryStringParameters']['socketkey']
-  // const socketKey = event['queryStringParameters']['socketkey']
+  const body = JSON.parse(event.body);
+  const socketKey = body.roomid;
   let connectionData;
   
   const params = {
@@ -28,10 +28,10 @@ exports.handler = async (event: any) => {
     endpoint: event.requestContext.domainName + '/' + event.requestContext.stage
   });
   
-  const postData = JSON.parse(event.body).data;
+  const postData = body.data;
   
   const postCalls = connectionData.Items.map(async (connectionItem: any) => {
-    const connectionId = connectionItem['id'];
+    const connectionId = connectionItem['connectionid'];
     console.log(`connectionId = ${connectionId}`);
     try {
       await apigwManagementApi.postToConnection({ ConnectionId: connectionId, Data: postData }).promise();
@@ -40,7 +40,7 @@ exports.handler = async (event: any) => {
         console.log(`Found stale connection, deleting ${connectionId}`);
         await ddb.delete({ TableName: 'websocket-sessioninfo-test', Key: {
             socketkey: socketKey,
-            id: connectionId
+            connectionid: connectionId
           }
         }).promise();
       } else {

@@ -9,7 +9,7 @@ export class DynamoDBStack extends NestedStack {
     const webSocketSessionInfo = new Table(this, 'WebSocketSessionInfoTable', {
       tableName: 'websocket-sessioninfo-test',
       partitionKey: { name: 'socketkey', type: AttributeType.STRING },
-      sortKey: { name: 'id', type: AttributeType.STRING },
+      sortKey: { name: 'connectionid', type: AttributeType.STRING },
       billingMode: BillingMode.PAY_PER_REQUEST,
       pointInTimeRecovery: false,
       removalPolicy: RemovalPolicy.DESTROY

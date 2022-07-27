@@ -1,4 +1,4 @@
-import * as AWS from "aws-sdk";
+import * as AWS from 'aws-sdk';
 
 export async function handler(event: any): Promise<any> {
   console.log(`onDefault ${JSON.stringify(event)}`);

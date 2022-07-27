@@ -1,10 +1,10 @@
 import * as AWS from 'aws-sdk';
 
 exports.handler = async (event: any) => {
-  console.log(`onConnect ${JSON.stringify(event)}`);
   const ddb = new AWS.DynamoDB.DocumentClient({ apiVersion: '2012-08-10', region: process.env.AWS_REGION });
-  const socketKey = '$connect'; // event['queryStringParameters']['socketkey']
-  // const socketKey = event['queryStringParameters']['socketkey']
+  const body = JSON.parse(event.body);
+  const socketKey = body.roomid;
+  
   const putParams = {
     TableName: 'websocket-sessioninfo-test',
     Item: {
@@ -17,8 +17,8 @@ exports.handler = async (event: any) => {
   try {
     await ddb.put(putParams).promise();
   } catch (err) {
-    return { statusCode: 500, body: 'Failed to connect: ' + JSON.stringify(err) };
+    return { statusCode: 500, body: 'Failed to join: ' + JSON.stringify(err) };
   }
 
-  return { statusCode: 200, body: 'Connected.' };
+  return { statusCode: 200, body: 'Join succeeded.' };
 };
