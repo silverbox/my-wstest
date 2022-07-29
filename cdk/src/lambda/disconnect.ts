@@ -1,8 +1,9 @@
 import * as AWS from 'aws-sdk';
+import * as broadcastlayer from './broadcastlayer';
 
 exports.handler = async (event: any) => {
   const ddb = new AWS.DynamoDB.DocumentClient({ apiVersion: '2012-08-10', region: process.env.AWS_REGION });
-  const socketKey = '$connect';
+  const socketKey = broadcastlayer.CONNECT_KEY;
   const connectionId = event.requestContext.connectionId;
 
   const deleteParams = {

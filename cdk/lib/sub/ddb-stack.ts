@@ -14,5 +14,13 @@ export class DynamoDBStack extends NestedStack {
       pointInTimeRecovery: false,
       removalPolicy: RemovalPolicy.DESTROY
     });
+
+    const webSocketRoomInfo = new Table(this, 'WebSocketRoomInfoTable', {
+      tableName: 'websocket-roominfo-test',
+      partitionKey: { name: 'roomid', type: AttributeType.STRING },
+      billingMode: BillingMode.PAY_PER_REQUEST,
+      pointInTimeRecovery: false,
+      removalPolicy: RemovalPolicy.DESTROY
+    });
   }
 }

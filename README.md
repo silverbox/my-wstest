@@ -29,20 +29,32 @@ npx cdk deploy # you need to comment out some part of cdk/lib/sub/api-stack.ts a
 wscat -c wss://y5ucuka917.execute-api.ap-northeast-1.amazonaws.com/dev
 ```
 
+## add
+
+```json
+{"action": "add", "roomid": "testroomid", "roomname": "testroomname"}
+```
+
 ## join
 
 ```json
-{"action":"join", "roomid":"testroom"}
+{"action": "join", "roomid": "testroomid"}
 ```
 
 ## sendmessage
 
 ```json
-{"action":"sendmessage", "roomid":"testroom", "data":"hello world"}
+{"action": "sendmessage", "roomid": "testroomid", "data": "hello world"}
 ```
 
 ## leave
 
 ```json
-{"action":"leave", "roomid":"testroom"}
+{"action": "leave", "roomid": "testroomid"}
+```
+
+## delete
+
+```json
+{"action": "delete", "roomid": "testroomid"}
 ```

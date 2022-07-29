@@ -1,4 +1,5 @@
 import * as AWS from 'aws-sdk';
+import * as broadcastlayer from './broadcastlayer';
 
 exports.handler = async (event: any) => {
   const ddb = new AWS.DynamoDB.DocumentClient({ apiVersion: '2012-08-10', region: process.env.AWS_REGION });
@@ -19,6 +20,7 @@ exports.handler = async (event: any) => {
   } catch (err) {
     return { statusCode: 500, body: 'Failed to join: ' + JSON.stringify(err) };
   }
+  await broadcastlayer.broadcastToRoom(event, socketKey, body);
 
   return { statusCode: 200, body: 'Join succeeded.' };
 };
