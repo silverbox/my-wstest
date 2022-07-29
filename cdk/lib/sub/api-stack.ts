@@ -47,6 +47,11 @@ export class ApiStack extends NestedStack {
       entry: 'src/lambda/disconnect.ts',
       ...commonLambdaParam
     });
+    const lambdaAdd = new lambdajs.NodejsFunction(this, 'WebSocketLambdaFunctionAdd', {
+      functionName: 'websocket-lambdaadd',
+      entry: 'src/lambda/add.ts',
+      ...commonLambdaParam
+    });
     const lambdaJoin = new lambdajs.NodejsFunction(this, 'WebSocketLambdaFunctionJoin', {
       functionName: 'websocket-lambdajoin',
       entry: 'src/lambda/join.ts',
@@ -62,6 +67,11 @@ export class ApiStack extends NestedStack {
       entry: 'src/lambda/leave.ts',
       ...commonLambdaParam
     });
+    const lambdaDelete = new lambdajs.NodejsFunction(this, 'WebSocketLambdaFunctionDelete', {
+      functionName: 'websocket-lambdadelete',
+      entry: 'src/lambda/delete.ts',
+      ...commonLambdaParam
+    });
     const lambdaDefault = new lambdajs.NodejsFunction(this, 'WebSocketLambdaFunctionDefault', {
       functionName: 'websocket-lambdadefault',
       entry: 'src/lambda/default.ts',
@@ -74,9 +84,11 @@ export class ApiStack extends NestedStack {
       resources: [
         lambdaConnect.functionArn,
         lambdaDisconnect.functionArn,
+        lambdaAdd.functionArn,
         lambdaJoin.functionArn,
         lambdaSendMessage.functionArn,
         lambdaLeave.functionArn,
+        lambdaDelete.functionArn,
         lambdaDefault.functionArn
       ],
       actions: [
@@ -96,81 +108,93 @@ export class ApiStack extends NestedStack {
     });
 
     // integrations
-    const integrationConnect = new apigatewayv2.CfnIntegration(scope, 'WebSocketApiGatewayLambdaIntegrationConnect', {
+    const commonIntegrationsParam = {
       apiId: webSocketApi.ref,
       integrationType: 'AWS_PROXY',
-      integrationUri: `arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${lambdaConnect.functionArn}/invocations`,
       credentialsArn: apigwRole.roleArn,
+    };
+    const commonConnectParam = {
+      apiId: webSocketApi.ref,
+      authorizationType: 'NONE',
+    };
+
+    const integrationConnect = new apigatewayv2.CfnIntegration(scope, 'WebSocketApiGatewayLambdaIntegrationConnect', {
+      ...commonIntegrationsParam,
+      integrationUri: `arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${lambdaConnect.functionArn}/invocations`,
     });
     const routeConnect = new apigatewayv2.CfnRoute(scope, 'WebSocketApiGatewayRouteConnect', {
-      apiId: webSocketApi.ref,
+      ...commonConnectParam,
       routeKey: '$connect',
-      authorizationType: 'NONE',
       target: 'integrations/' + integrationConnect.ref,
     });
 
     const integrationDisconnect = new apigatewayv2.CfnIntegration(scope, 'WebSocketApiGatewayLambdaIntegrationDisconnect', {
-      apiId: webSocketApi.ref,
-      integrationType: 'AWS_PROXY',
+      ...commonIntegrationsParam,
       integrationUri: `arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${lambdaDisconnect.functionArn}/invocations`,
-      credentialsArn: apigwRole.roleArn,
     });
     const routeDisconnect = new apigatewayv2.CfnRoute(scope, 'WebSocketApiGatewayRouteDisonnect', {
-      apiId: webSocketApi.ref,
+      ...commonConnectParam,
       routeKey: '$disconnect',
-      authorizationType: 'NONE',
       target: 'integrations/' + integrationDisconnect.ref,
     });
 
+    const integrationAdd = new apigatewayv2.CfnIntegration(scope, 'WebSocketApiGatewayLambdaIntegrationAdd', {
+      ...commonIntegrationsParam,
+      integrationUri: `arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${lambdaAdd.functionArn}/invocations`,
+    });
+    const routeAdd = new apigatewayv2.CfnRoute(scope, 'WebSocketApiGatewayRouteAdd', {
+      ...commonConnectParam,
+      routeKey: 'add',
+      target: 'integrations/' + integrationAdd.ref,
+    });
+
     const integrationJoin = new apigatewayv2.CfnIntegration(scope, 'WebSocketApiGatewayLambdaIntegrationJoin', {
-      apiId: webSocketApi.ref,
-      integrationType: 'AWS_PROXY',
+      ...commonIntegrationsParam,
       integrationUri: `arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${lambdaJoin.functionArn}/invocations`,
-      credentialsArn: apigwRole.roleArn,
     });
     const routeJoin = new apigatewayv2.CfnRoute(scope, 'WebSocketApiGatewayRouteJoin', {
-      apiId: webSocketApi.ref,
+      ...commonConnectParam,
       routeKey: 'join',
-      authorizationType: 'NONE',
       target: 'integrations/' + integrationJoin.ref,
     });
 
     const integrationSendMessage = new apigatewayv2.CfnIntegration(scope, 'WebSocketApiGatewayLambdaIntegrationSendMessage', {
-      apiId: webSocketApi.ref,
-      integrationType: 'AWS_PROXY',
+      ...commonIntegrationsParam,
       integrationUri: `arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${lambdaSendMessage.functionArn}/invocations`,
-      credentialsArn: apigwRole.roleArn,
     });
     const routeSendMessage = new apigatewayv2.CfnRoute(scope, 'WebSocketApiGatewayRouteSendMessage', {
-      apiId: webSocketApi.ref,
+      ...commonConnectParam,
       routeKey: 'sendmessage',
-      authorizationType: 'NONE',
       target: 'integrations/' + integrationSendMessage.ref,
     });
 
     const integrationLeave = new apigatewayv2.CfnIntegration(scope, 'WebSocketApiGatewayLambdaIntegrationLeave', {
-      apiId: webSocketApi.ref,
-      integrationType: 'AWS_PROXY',
+      ...commonIntegrationsParam,
       integrationUri: `arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${lambdaLeave.functionArn}/invocations`,
-      credentialsArn: apigwRole.roleArn,
     });
     const routeLeave = new apigatewayv2.CfnRoute(scope, 'WebSocketApiGatewayRouteLeave', {
-      apiId: webSocketApi.ref,
+      ...commonConnectParam,
       routeKey: 'leave',
-      authorizationType: 'NONE',
       target: 'integrations/' + integrationLeave.ref,
     });
 
+    const integrationDelete = new apigatewayv2.CfnIntegration(scope, 'WebSocketApiGatewayLambdaIntegrationDelete', {
+      ...commonIntegrationsParam,
+      integrationUri: `arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${lambdaDelete.functionArn}/invocations`,
+    });
+    const routeDelete = new apigatewayv2.CfnRoute(scope, 'WebSocketApiGatewayRouteDelete', {
+      ...commonConnectParam,
+      routeKey: 'delete',
+      target: 'integrations/' + integrationDelete.ref,
+    });
+
     const integrationDefault = new apigatewayv2.CfnIntegration(scope, 'WebSocketApiGatewayLambdaIntegrationDefault', {
-      apiId: webSocketApi.ref,
-      integrationType: 'AWS_PROXY',
+      ...commonIntegrationsParam,
       integrationUri: `arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${lambdaDefault.functionArn}/invocations`,
-      credentialsArn: apigwRole.roleArn,
     });
     const routeDefault = new apigatewayv2.CfnRoute(scope, 'WebSocketApiGatewayRouteDefault', {
-      apiId: webSocketApi.ref,
+      ...commonConnectParam,
       routeKey: '$default',
-      authorizationType: 'NONE',
       target: 'integrations/' + integrationDefault.ref,
     });
 
