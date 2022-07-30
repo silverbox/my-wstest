@@ -26,7 +26,8 @@ npx cdk deploy # you need to comment out some part of cdk/lib/sub/api-stack.ts a
 ## connect
 
 ```bash
-wscat -c wss://y5ucuka917.execute-api.ap-northeast-1.amazonaws.com/dev
+# you need to get actual URL of API Gateway
+wscat -c wss://hogefuga.execute-api.ap-northeast-1.amazonaws.com/dev
 ```
 
 ## add
