@@ -58,3 +58,18 @@ wscat -c wss://y5ucuka917.execute-api.ap-northeast-1.amazonaws.com/dev
 ```json
 {"action": "delete", "roomid": "testroomid"}
 ```
+
+# vue setup
+
+一時的コンテナで作業
+```bash
+docker run -it --entrypoint bash --rm -v "$(pwd):/vue" -w /vue -p 8080:8080 node:18.7 -c bash
+```
+
+コンテナ内
+```bash
+yarn global add @vue/cli
+vue create vuefront # vue3, yarnを選択
+cd vuefront
+yarn add vue3-beautiful-chat
+```
